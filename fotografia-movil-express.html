@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fotografía Móvil Express para Redes Sociales - Interactivo</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .step-card {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .step-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+        .quiz-button {
+            transition: background-color 0.15s, transform 0.1s;
+        }
+        .quiz-button:hover {
+            transform: translateY(-1px);
+        }
+        .quiz-button.correct {
+            background-color: #10B981 !important; /* Green 500 */
+        }
+        .quiz-button.incorrect {
+            background-color: #EF4444 !important; /* Red 500 */
+        }
+        .flashcard {
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        .flashcard-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            text-align: center;
+            /* Oculta la parte trasera por defecto para el efecto 3D */
+            backface-visibility: hidden;
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .flashcard-front {
+            background-color: #3B82F6; /* Blue 500 */
+            color: white;
+            z-index: 2;
+        }
+        .flashcard-back {
+            background-color: #10B981; /* Green 500 */
+            color: white;
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Encabezado Fijo -->
+    <header class="mb-8 border-b pb-4 bg-white/70 backdrop-blur-sm sticky top-0 z-10 rounded-xl shadow-lg">
+        <div class="max-w-4xl mx-auto flex justify-between items-center px-4 md:px-6">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+                <i data-lucide="phone" class="w-6 h-6 mr-2 text-blue-600"></i>
+                Fotografía Móvil Express
+            </h1>
+            <span class="text-sm font-semibold text-blue-600 bg-blue-100 px-3 py-1 rounded-full hidden sm:block">
+                Taller Interactivo
+            </span>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal (Max Width) -->
+    <main class="max-w-4xl mx-auto">
+
+        <!-- Contenedor del Título y Resumen -->
+        <div id="intro-container" class="mb-10 text-center p-6 bg-white rounded-xl step-card">
+            <h2 class="text-3xl font-extrabold text-blue-800 mb-2">
+                ¡Bienvenido al Recorrido Interactivo!
+            </h2>
+            <p class="text-gray-600 mb-4">
+                Aquí podrás repasar y afianzar los conceptos clave del taller <strong>Fotografía Móvil Express para Redes Sociales</strong> a través de pasos guiados y mini-quizzes.
+            </p>
+            <button id="start-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-300">
+                Comenzar el Aprendizaje
+            </button>
+        </div>
+
+        <!-- Contenedor del Paso a Paso -->
+        <div id="steps-container" class="hidden">
+            <!-- El contenido de los pasos se renderizará aquí -->
+        </div>
+
+        <!-- Navegación y Progreso -->
+        <div id="navigation-container" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-2xl">
+            <div class="max-w-4xl mx-auto flex justify-between items-center">
+                <button id="prev-step" class="flex items-center text-gray-600 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150">
+                    <i data-lucide="chevron-left" class="w-5 h-5 mr-1"></i>
+                    Anterior
+                </button>
+                <span id="step-counter" class="text-sm font-medium text-blue-600 bg-blue-100 px-3 py-1 rounded-full">
+                    Paso 1 de 15
+                </span>
+                <button id="next-step" class="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    Siguiente
+                    <i data-lucide="chevron-right" class="w-5 h-5 ml-1"></i>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal de Resultados del Quiz -->
+    <div id="quiz-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity duration-300">
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-sm text-center transform transition-transform duration-300 scale-95">
+            <i id="modal-icon" class="w-12 h-12 mx-auto mb-4" data-lucide="check-circle" style="color: #10B981;"></i>
+            <h3 id="modal-title" class="text-2xl font-bold mb-3 text-gray-800">¡Correcto!</h3>
+            <p id="modal-message" class="text-gray-600 mb-6">Pasaste la prueba. ¡Sigamos adelante!</p>
+            <button id="modal-close-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200">
+                Continuar
+            </button>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { createIcons, Phone, Lightbulb, Zap, Camera, Sun, Moon, Sparkles, XCircle, Focus, Crop, Palette, Target, ListChecks, PenTool, Layout, ChevronRight, ChevronLeft, CheckCircle, HelpCircle, Star } from 'https://cdn.skypack.dev/lucide@latest';
+
+        // --- Variables Globales ---
+        let currentStep = 0;
+        let isQuizPassed = true; // Empieza como true para el primer paso (introducción)
+        const totalSteps = 15;
+
+        const iconSet = { Phone, Lightbulb, Zap, Camera, Sun, Moon, Sparkles, XCircle, Focus, Crop, Palette, Target, ListChecks, PenTool, Layout, ChevronRight, ChevronLeft, CheckCircle, HelpCircle, Star };
+
+        const renderIcons = (options = {}) => createIcons({ icons: iconSet, ...options });
+
+        // --- Estructura de Contenido ---
+        const steps = [
+            {
+                id: 1,
+                title: "1. La base de todo: ¿Qué es una foto que vende?",
+                icon: "lightbulb",
+                content: `
+                    <p class="text-gray-700 mb-4">Una foto que vende es más que una simple imagen; es una herramienta de comunicación. Debe generar una conexión y motivar la compra. Revisa los puntos clave a continuación:</p>
+                    <ul class="list-none space-y-3 pl-0 text-gray-700">
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> Comunica claridad: El producto es el protagonista.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> Refleja intención: Se alinea con la personalidad de la marca.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> Tiene buena luz: Sin sombras extrañas o colores sucios.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> Está bien compuesta: La disposición de elementos es agradable.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> Muestra lo esencial del producto: El detalle que importa.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> Genera confianza: Se ve profesional y real.</li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-lg">
+                        <p class="font-semibold text-blue-800 flex items-center"><i data-lucide="target" class="w-5 h-5 mr-2"></i> Consejo Visual: </p>
+                        <p class="text-blue-700 text-sm">Piensa en un buen ejemplo visual de tu producto. ¿La foto lo representa bien?</p>
+                    </div>
+                `,
+                quiz: {
+                    question: "¿Cuál de estos NO es un elemento clave de una foto que vende?",
+                    options: [
+                        { text: "Tener buena luz y estar bien compuesta.", isCorrect: false },
+                        { text: "Generar confianza y comunicar claridad.", isCorrect: false },
+                        { text: "Usar siempre el zoom digital al máximo.", isCorrect: true }
+                    ],
+                    nextStep: 2
+                }
+            },
+            {
+                id: 2,
+                title: "2. La luz lo es TODO",
+                icon: "sun",
+                content: `
+                    <p class="text-gray-700 mb-4">La luz natural es la más fácil de controlar y la que da mejores resultados. Recuerda que no necesitas un estudio, ¡una ventana es suficiente!</p>
+                    <h4 class="font-semibold text-gray-800 mt-4 mb-2 flex items-center"><i data-lucide="zap" class="w-4 h-4 mr-2 text-yellow-600"></i> Dónde colocar el producto:</h4>
+                    <ul class="list-none space-y-2 pl-0 text-gray-700">
+                        <li class="flex items-start"><i data-lucide="chevron-right" class="w-4 h-4 mr-2 mt-1 text-yellow-500 min-w-[16px]"></i> Cerca de una ventana (luz abundante).</li>
+                        <li class="flex items-start"><i data-lucide="chevron-right" class="w-4 h-4 mr-2 mt-1 text-yellow-500 min-w-[16px]"></i> Usar luz lateral suave (para textura y volumen).</li>
+                        <li class="flex items-start"><i data-lucide="chevron-right" class="w-4 h-4 mr-2 mt-1 text-yellow-500 min-w-[16px]"></i> Evitar la luz directa del sol (crea sombras muy duras).</li>
+                        <li class="flex items-start"><i data-lucide="chevron-right" class="w-4 h-4 mr-2 mt-1 text-yellow-500 min-w-[16px]"></i> Usar un difusor (una tela blanca delgada funciona).</li>
+                    </ul>
+                    <h4 class="font-semibold text-gray-800 mt-4 mb-2 flex items-center"><i data-lucide="target" class="w-4 h-4 mr-2 text-red-600"></i> Tips Rápidos:</h4>
+                    <ul class="list-disc list-inside space-y-1 text-gray-700 pl-4">
+                        <li><strong>Luz lateral:</strong> Resalta textura y volumen.</li>
+                        <li><strong>Luz frontal:</strong> Da limpieza y claridad (útil para detalles).</li>
+                        <li><strong>Luz trasera (Contraluz):</strong> Evítala para productos, crea dramatismo pero oscurece el objeto.</li>
+                    </ul>
+                `,
+                quiz: {
+                    question: "¿Qué tipo de luz es la mejor aliada para la fotografía de productos y qué efecto genera?",
+                    options: [
+                        { text: "Luz trasera, genera limpieza y claridad.", isCorrect: false },
+                        { text: "Luz natural lateral, genera textura y volumen.", isCorrect: true },
+                        { text: "Luz directa del sol, ayuda a evitar sombras.", isCorrect: false }
+                    ],
+                    nextStep: 3
+                }
+            },
+            {
+                id: 3,
+                title: "3. Cómo controlar la luz con objetos caseros",
+                icon: "zap",
+                content: `
+                    <p class="text-gray-700 mb-4">No necesitas comprar equipo costoso. Con estos 4 objetos caseros puedes transformar la iluminación de tu producto:</p>
+                    <ul class="list-none space-y-3 pl-0 text-gray-700">
+                        <li class="flex items-start"><i data-lucide="pen-tool" class="w-5 h-5 mr-2 mt-1 text-indigo-500 min-w-[20px]"></i> <strong>Cartulina blanca:</strong> Actúa como <span class="font-semibold text-indigo-600">Rebotador</span>. Refleja la luz hacia las sombras para suavizarlas.</li>
+                        <li class="flex items-start"><i data-lucide="pen-tool" class="w-5 h-5 mr-2 mt-1 text-indigo-500 min-w-[20px]"></i> <strong>Tela blanca:</strong> Actúa como <span class="font-semibold text-indigo-600">Difusor</span>. Colócala entre la ventana y el producto para suavizar la luz.</li>
+                        <li class="flex items-start"><i data-lucide="pen-tool" class="w-5 h-5 mr-2 mt-1 text-indigo-500 min-w-[20px]"></i> <strong>Cartón negro:</strong> Actúa como <span class="font-semibold text-indigo-600">Controlador de Sombras</span> (o "bandera"). Absorbe la luz para aumentar el contraste y la oscuridad en un lado.</li>
+                        <li class="flex items-start"><i data-lucide="pen-tool" class="w-5 h-5 mr-2 mt-1 text-indigo-500 min-w-[20px]"></i> <strong>Mesa y pared clara:</strong> Crea un <span class="font-semibold text-indigo-600">Fondo Infinito Casero</span>, el fondo perfecto sin cortes.</li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded-lg">
+                        <p class="font-semibold text-indigo-800">Recuerda: El rebotador va del lado contrario a la luz. El difusor va entre la luz y el objeto.</p>
+                    </div>
+                `,
+                quiz: {
+                    question: "¿Qué objeto casero usarías para rebotar la luz y suavizar las sombras?",
+                    options: [
+                        { text: "Cartón negro.", isCorrect: false },
+                        { text: "Cartulina blanca.", isCorrect: true },
+                        { text: "Una tela de color oscuro.", isCorrect: false }
+                    ],
+                    nextStep: 4
+                }
+            },
+            {
+                id: 4,
+                title: "4. Fondos profesionales (hechos en casa)",
+                icon: "layout",
+                content: `
+                    <p class="text-gray-700 mb-4">Un fondo adecuado es crucial para que el producto destaque sin distracciones. Los fondos de tela, papel o cartulina son tus mejores amigos.</p>
+                    <h4 class="font-semibold text-gray-800 mt-4 mb-2 flex items-center"><i data-lucide="list-checks" class="w-4 h-4 mr-2 text-pink-600"></i> Características del fondo ideal:</h4>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700 pl-4">
+                        <li><strong>Neutro:</strong> Colores como blanco, gris o beige.</li>
+                        <li><strong>Sin texturas fuertes:</strong> La textura puede distraer del producto.</li>
+                        <li><strong>Sin distracciones:</strong> Evita objetos que no pertenecen a la escena.</li>
+                        <li><strong>Acorde al estilo de la marca:</strong> El color y material deben complementar tu branding.</li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-pink-50 border-l-4 border-pink-400 rounded-lg">
+                        <p class="font-semibold text-pink-800">Tip de Diseño:</p>
+                        <p class="text-pink-700 text-sm">El "fondo infinito" con una mesa y pared clara elimina la línea de horizonte, dando un toque súper profesional.</p>
+                    </div>
+                `,
+                quiz: {
+                    question: "¿Por qué se recomienda un fondo neutro y sin texturas fuertes?",
+                    options: [
+                        { text: "Para ahorrar costos en el montaje de la escena.", isCorrect: false },
+                        { text: "Para evitar que el fondo distraiga la atención del producto.", isCorrect: true },
+                        { text: "Porque la luz natural solo funciona bien con fondos claros.", isCorrect: false }
+                    ],
+                    nextStep: 5
+                }
+            },
+            {
+                id: 5,
+                title: "5. Composición simple que funciona",
+                icon: "target",
+                content: `
+                    <p class="text-gray-700 mb-4">La composición es cómo organizas los elementos en el encuadre para que sea visualmente atractivo. ¡Menos es más!</p>
+                    <h4 class="font-semibold text-gray-800 mt-4 mb-2 flex items-center"><i data-lucide="layout" class="w-4 h-4 mr-2 text-teal-600"></i> Las 3 composiciones clave:</h4>
+                    <ul class="list-none space-y-3 pl-0 text-gray-700">
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-teal-500 min-w-[20px]"></i> <strong>Regla de los tercios:</strong> Coloca tu producto en una de las 4 intersecciones clave (puntos fuertes). El celular suele tener esta guía.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-teal-500 min-w-[20px]"></i> <strong>Composición central:</strong> Coloca el producto justo en el medio. Ideal para productos minimalistas o simétricos.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-teal-500 min-w-[20px]"></i> <strong>Líneas diagonales:</strong> Usa elementos (como el borde de una mesa o un accesorio) que dirijan la vista del espectador hacia el producto.</li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-teal-50 border-l-4 border-teal-400 rounded-lg">
+                        <p class="font-semibold text-teal-800">Visuales de Composición:</p>
+                        <p class="text-teal-700 text-sm">Recuerda que la Regla de los Tercios es la más versátil, pero la Composición Central es la más directa.</p>
+                    </div>
+                `,
+                quiz: {
+                    question: "¿Para qué sirve la Regla de los Tercios?",
+                    options: [
+                        { text: "Para dividir el encuadre en dos mitades.", isCorrect: false },
+                        { text: "Para iluminar mejor las esquinas del producto.", isCorrect: false },
+                        { text: "Para identificar los 4 puntos clave donde colocar el producto.", isCorrect: true }
+                    ],
+                    nextStep: 6
+                }
+            },
+            {
+                id: 6,
+                title: "6. Ángulos ganadores para fotos con celular",
+                icon: "camera",
+                content: `
+                    <p class="text-gray-700 mb-4">El ángulo lo es todo. Cambiar el punto de vista transforma la percepción del producto. Los 3 ángulos más efectivos son:</p>
+                    <ul class="list-none space-y-3 pl-0 text-gray-700">
+                        <li class="flex items-start"><i data-lucide="target" class="w-5 h-5 mr-2 mt-1 text-red-500 min-w-[20px]"></i> 🔸 <strong>Cenital (90°):</strong> La cámara mira directo hacia abajo. Perfecto para composiciones planas (flat-lays), comida, papelería y kits de productos.</li>
+                        <li class="flex items-start"><i data-lucide="target" class="w-5 h-5 mr-2 mt-1 text-red-500 min-w-[20px]"></i> 🔸 <strong>45° Clásico:</strong> El ángulo más natural, similar a cómo veríamos el producto en persona. Es el más versátil.</li>
+                        <li class="flex items-start"><i data-lucide="target" class="w-5 h-5 mr-2 mt-1 text-red-500 min-w-[20px]"></i> 🔸 <strong>Frontal:</strong> La cámara está a la misma altura del producto. Ideal para productos 'de pie' como botellas, empaques o libros.</li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-lg">
+                        <p class="font-semibold text-red-800">Visuales Comparativos:</p>
+                        <p class="text-red-700 text-sm">Si tienes dudas, ¡el 45° casi siempre funciona! Pero prueba el Cenital para mostrar más elementos en una sola toma.</p>
+                    </div>
+                `,
+                quiz: {
+                    question: "¿Qué ángulo es ideal para fotografiar un 'flat-lay' de papelería?",
+                    options: [
+                        { text: "Frontal.", isCorrect: false },
+                        { text: "Cenital (90°).", isCorrect: true },
+                        { text: "45° Clásico.", isCorrect: false }
+                    ],
+                    nextStep: 7
+                }
+            },
+            {
+                id: 7,
+                title: "7. Errores comunes (y cómo evitarlos) - ¡Flashcards!",
+                icon: "x-circle",
+                content: `
+                    <p class="text-gray-700 mb-6">Identificar y corregir estos errores es un atajo hacia fotos profesionales. ¡Usa las flashcards interactivas para repasar!</p>
+                    <div id="flashcard-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Flashcards se insertan aquí -->
+                    </div>
+                    <p class="text-sm text-gray-500 mt-6 text-center">Toca cada tarjeta para ver la solución al error.</p>
+                `,
+                quiz: {
+                    question: "¿Cuál es el principal problema del 'Zoom Digital'?",
+                    options: [
+                        { text: "Añade un efecto de desenfoque no deseado.", isCorrect: false },
+                        { text: "Genera mucho ruido y pierde calidad de imagen.", isCorrect: true },
+                        { text: "Activa automáticamente la luz amarilla sucia.", isCorrect: false }
+                    ],
+                    nextStep: 8
+                }
+            },
+            {
+                id: 8,
+                title: "8. El celular como herramienta profesional",
+                icon: "focus",
+                content: `
+                    <p class="text-gray-700 mb-4">Tu celular tiene controles manuales que te permiten ir más allá del modo automático. ¡Sácale provecho!</p>
+                    <h4 class="font-semibold text-gray-800 mt-4 mb-2 flex items-center"><i data-lucide="phone" class="w-4 h-4 mr-2 text-green-600"></i> Funciones Pro:</h4>
+                    <ul class="list-none space-y-3 pl-0 text-gray-700">
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-green-500 min-w-[20px]"></i> <strong>Enfoque manual:</strong> Toca la pantalla en el punto que quieres más nítido (normalmente el producto).</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-green-500 min-w-[20px]"></i> <strong>Control de exposición:</strong> Después de enfocar, desliza el ícono de sol (o brillo) hacia arriba o abajo para iluminar u oscurecer la toma.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-green-500 min-w-[20px]"></i> <strong>Evita zoom digital:</strong> Siempre, siempre, <strong>acércate tú</strong> al objeto.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-green-500 min-w-[20px]"></i> <strong>Modo Retrato:</strong> Úsalo con precaución, funciona mejor en objetos con formas definidas que no tienen muchos detalles en los bordes.</li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-lg">
+                        <p class="font-semibold text-green-800">Visual de Pantalla:</p>
+                        <p class="text-green-700 text-sm">Practica la Exposición y Enfoque en tu celular ahora mismo, es la base del control.</p>
+                    </div>
+                `,
+                quiz: {
+                    question: "¿Cómo controlas la exposición (brillo) de la foto en la mayoría de los celulares?",
+                    options: [
+                        { text: "Activando el flash en modo 'Auto'.", isCorrect: false },
+                        { text: "Deslizando el ícono de brillo/sol hacia arriba o abajo después de enfocar.", isCorrect: true },
+                        { text: "Presionando el botón de volumen para cambiar de modo.", isCorrect: false }
+                    ],
+                    nextStep: 9
+                }
+            },
+            {
+                id: 9,
+                title: "9. Flujo Express de Edición (5 pasos)",
+                icon: "palette",
+                content: `
+                    <p class="text-gray-700 mb-4">La edición no es para engañar, sino para pulir y estandarizar el estilo de tu marca. ¡Este es el orden que funciona!</p>
+                    <ol class="list-decimal list-inside space-y-3 pl-4 text-gray-700">
+                        <li class="font-semibold text-blue-600">Recorta a 4:5: Es el formato vertical ideal para Instagram.</li>
+                        <li class="font-semibold text-blue-600">Ajusta exposición: Corrige si está muy clara u oscura.</li>
+                        <li class="font-semibold text-blue-600">Mejora contraste: Separa los tonos claros de los oscuros.</li>
+                        <li class="font-semibold text-blue-600">Ajusta temperatura: Neutral o ligeramente fría (evita luz amarilla sucia).</li>
+                        <li class="font-semibold text-blue-600">Nitidez moderada: Un toque final para que se vea más nítida, sin exagerar.</li>
+                    </ol>
+                    <div class="mt-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-lg">
+                        <p class="font-semibold text-blue-800">Ejemplo Antes/Después:</p>
+                        <p class="text-blue-700 text-sm">Incluso con una buena toma, la edición finaliza el look profesional.</p>
+                    </div>
+                `,
+                quiz: {
+                    question: "¿Qué ajuste de edición es fundamental para empezar, ya que define el formato de la imagen?",
+                    options: [
+                        { text: "Mejorar el contraste.", isCorrect: false },
+                        { text: "Recortar a 4:5.", isCorrect: true },
+                        { text: "Ajustar la temperatura.", isCorrect: false }
+                    ],
+                    nextStep: 10
+                }
+            },
+            {
+                id: 10,
+                title: "10. Usa IA para potenciar tus fotos",
+                icon: "sparkles",
+                content: `
+                    <p class="text-gray-700 mb-4 font-bold text-red-600">¡IMPORTANTE! La IA NO reemplaza tus fotos reales.</p>
+                    <p class="text-gray-700 mb-4">Sin embargo, es una herramienta poderosa para la etapa de <strong>planificación y presentación</strong>.</p>
+                    <h4 class="font-semibold text-gray-800 mt-4 mb-2 flex items-center"><i data-lucide="lightbulb" class="w-4 h-4 mr-2 text-yellow-600"></i> Ejemplos de uso (Prompts):</h4>
+                    <ul class="list-none space-y-3 pl-0 text-gray-700">
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-yellow-500 min-w-[20px]"></i> <strong>Ideas de fotos:</strong> "Dame 10 ideas de fotos para un producto [X] con luz natural y fondos neutros."</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-yellow-500 min-w-[20px]"></i> <strong>Estilo visual:</strong> "Crea un moodboard minimalista en tonos neutros para mi marca de jabones."</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-yellow-500 min-w-[20px]"></i> <strong>Guía de sesión:</strong> "Actúa como asistente y guíame para tomar 5 fotos de mi joya con fondo blanco."</li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                        <p class="font-semibold text-yellow-800">Enfócate en la planificación para que tu sesión sea más eficiente.</p>
+                    </div>
+                `,
+                quiz: {
+                    question: "¿Cuál es el rol principal de la IA en la fotografía de productos, según el taller?",
+                    options: [
+                        { text: "Reemplazar completamente las fotos reales.", isCorrect: false },
+                        { text: "Ayudar en la planificación, ideas y presentación.", isCorrect: true },
+                        { text: "Hacer el recorte y la nitidez automáticamente.", isCorrect: false }
+                    ],
+                    nextStep: 11
+                }
+            },
+            {
+                id: 11,
+                title: "11. Mockups: presentación profesional",
+                icon: "crop",
+                content: `
+                    <p class="text-gray-700 mb-4">Un mockup es una plantilla que simula cómo se vería tu foto en un contexto real (una pantalla de celular, un poster, un empaque). Ayudan a que tus fotos parezcan parte de un catálogo profesional.</p>
+                    <h4 class="font-semibold text-gray-800 mt-4 mb-2 flex items-center"><i data-lucide="list-checks" class="w-4 h-4 mr-2 text-purple-600"></i> Herramientas para crear Mockups:</h4>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700 pl-4">
+                        <li>Canva</li>
+                        <li>Mockuphone (para celulares y dispositivos)</li>
+                        <li>Smartmockups</li>
+                        <li>Gemini (pidiéndole plantillas, por ejemplo, "Dame un mockup minimalista para mi foto")</li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-purple-50 border-l-4 border-purple-400 rounded-lg">
+                        <p class="font-semibold text-purple-800">Diferencia Clave:</p>
+                        <p class="text-purple-700 text-sm">El mockup es la <strong>presentación</strong> final, no la foto en sí. Aumenta el valor percibido del producto.</p>
+                    </div>
+                `,
+                quiz: {
+                    question: "¿Cuál es el propósito de usar Mockups?",
+                    options: [
+                        { text: "Ajustar la exposición y la temperatura.", isCorrect: false },
+                        { text: "Simular cómo se vería la foto en un contexto real (ej. una pantalla).", isCorrect: true },
+                        { text: "Eliminar objetos fuera de contexto del fondo.", isCorrect: false }
+                    ],
+                    nextStep: 12
+                }
+            },
+            {
+                id: 12,
+                title: "12. Checklist previa a tomar fotos",
+                icon: "list-checks",
+                content: `
+                    <p class="text-gray-700 mb-4">Antes de apretar el botón, revisa esta lista. ¡Unos segundos de preparación ahorran minutos de edición!</p>
+                    <ul class="list-none space-y-3 pl-0 text-gray-700">
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> ✔ <strong>Lente Limpia:</strong> Fundamental.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> ✔ <strong>Luz Natural:</strong> Siempre la mejor opción.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> ✔ <strong>Fondo Neutro:</strong> Menos distracciones.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> ✔ <strong>Evita Zoom:</strong> Acércate tú.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> ✔ <strong>Enfoca Manual:</strong> Toca la pantalla en el producto.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> ✔ <strong>Revisa Sombras:</strong> Que no haya sombras raras o de tu propio cuerpo.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> ✔ <strong>Mantén Estabilidad:</strong> Usa una taza, caja, o trípode simple.</li>
+                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 mr-2 mt-1 text-blue-500 min-w-[20px]"></i> ✔ <strong>Haz Varias Tomas:</strong> Prueba ángulos y composiciones diferentes.</li>
+                    </ul>
+                `,
+                quiz: {
+                    question: "¿Cuál es el primer paso de la checklist antes de tomar cualquier foto?",
+                    options: [
+                        { text: "Revisar si el fondo es neutro.", isCorrect: false },
+                        { text: "Limpiar la lente del celular.", isCorrect: true },
+                        { text: "Hacer varias tomas de prueba.", isCorrect: false }
+                    ],
+                    nextStep: 13
+                }
+            },
+            {
+                id: 13,
+                title: "13. Guía de Prompts Ilustrada",
+                icon: "help-circle",
+                content: `
+                    <p class="text-gray-700 mb-4">Usa estos prompts listos para copiar y pegar en tu herramienta de IA favorita (como Gemini) para optimizar tu tiempo de planificación:</p>
+                    <ul class="list-none space-y-4 pl-0 text-gray-700">
+                        <li class="p-3 bg-gray-100 rounded-lg border border-gray-200">
+                            <span class="font-semibold text-blue-600 flex items-center mb-1"><i data-lucide="pen-tool" class="w-4 h-4 mr-2"></i> Ideas de fotos según rubro:</span>
+                            <code class="text-sm block bg-white p-2 rounded italic text-gray-700">"Dame ideas de fotos para [producto] usando luz natural y fondos simples."</code>
+                        </li>
+                        <li class="p-3 bg-gray-100 rounded-lg border border-gray-200">
+                            <span class="font-semibold text-blue-600 flex items-center mb-1"><i data-lucide="pen-tool" class="w-4 h-4 mr-2"></i> Estilo visual (Moodboard):</span>
+                            <code class="text-sm block bg-white p-2 rounded italic text-gray-700">"Crea un estilo visual minimalista en tonos neutros para mi marca [nombre]."</code>
+                        </li>
+                        <li class="p-3 bg-gray-100 rounded-lg border border-gray-200">
+                            <span class="font-semibold text-blue-600 flex items-center mb-1"><i data-lucide="pen-tool" class="w-4 h-4 mr-2"></i> Asistente de sesión:</span>
+                            <code class="text-sm block bg-white p-2 rounded italic text-gray-700">"Dime exactamente cómo acomodar mi producto para que se vea profesional."</code>
+                        </li>
+                        <li class="p-3 bg-gray-100 rounded-lg border border-gray-200">
+                            <span class="font-semibold text-blue-600 flex items-center mb-1"><i data-lucide="pen-tool" class="w-4 h-4 mr-2"></i> Corrección de errores:</span>
+                            <code class="text-sm block bg-white p-2 rounded italic text-gray-700">"Analiza esta foto y dime qué debo mejorar (con IA)."</code>
+                        </li>
+                        <li class="p-3 bg-gray-100 rounded-lg border border-gray-200">
+                            <span class="font-semibold text-blue-600 flex items-center mb-1"><i data-lucide="pen-tool" class="w-4 h-4 mr-2"></i> Mockups:</span>
+                            <code class="text-sm block bg-white p-2 rounded italic text-gray-700">"Dame mockups minimalistas donde pueda poner mi foto."</code>
+                        </li>
+                    </ul>
+                `,
+                quiz: {
+                    question: "¿Qué tipo de prompt utilizarías si necesitas ideas de composición para tu producto?",
+                    options: [
+                        { text: "El de 'Estilo visual'.", isCorrect: false },
+                        { text: "El de 'Asistente de sesión'.", isCorrect: true },
+                        { text: "El de 'Corrección de errores'.", isCorrect: false }
+                    ],
+                    nextStep: 14
+                }
+            },
+            {
+                id: 14,
+                title: "14. Plantilla de sesión fotográfica",
+                icon: "layout",
+                content: `
+                    <p class="text-gray-700 mb-4">Esta es una estructura simple y efectiva para tus sesiones. ¡Haz una secuencia de 4 tomas que cubran todos los aspectos de tu producto!</p>
+                    <h4 class="font-semibold text-gray-800 mt-4 mb-2 flex items-center"><i data-lucide="camera" class="w-4 h-4 mr-2 text-indigo-600"></i> Setup recomendado:</h4>
+                    <ul class="list-disc list-inside space-y-1 text-gray-700 pl-4">
+                        <li><strong>Luz:</strong> Ventana (luz lateral).</li>
+                        <li><strong>Fondo:</strong> Mesa y pared clara (fondo infinito).</li>
+                        <li><strong>Estabilidad:</strong> Cámara estable (taza / caja / trípode simple).</li>
+                    </ul>
+                    <h4 class="font-semibold text-gray-800 mt-4 mb-2 flex items-center"><i data-lucide="target" class="w-4 h-4 mr-2 text-indigo-600"></i> La secuencia de 4 tomas:</h4>
+                    <ul class="list-decimal list-inside space-y-3 pl-4 text-gray-700 font-medium">
+                        <li><strong>Toma 1:</strong> Ángulo Frontal - Mostrar forma general del empaque.</li>
+                        <li><strong>Toma 2:</strong> Ángulo 45° - Mostrar volumen y sensación natural.</li>
+                        <li><strong>Toma 3:</strong> Ángulo Cenital - Mostrar detalles y composición plana.</li>
+                        <li><strong>Toma 4:</strong> Close-up - Destacar textura, etiqueta o un detalle clave.</li>
+                    </ul>
+                `,
+                quiz: {
+                    question: "¿Qué toma es la más adecuada para destacar la textura o una etiqueta pequeña de un producto?",
+                    options: [
+                        { text: "Toma 1 (Frontal).", isCorrect: false },
+                        { text: "Toma 3 (Cenital).", isCorrect: false },
+                        { text: "Toma 4 (Close-up).", isCorrect: true }
+                    ],
+                    nextStep: 15
+                }
+            },
+            {
+                id: 15,
+                title: "15. Conclusiones clave",
+                icon: "sparkles",
+                content: `
+                    <p class="text-gray-700 mb-4">¡Has completado el repaso! Estas son las 6 ideas que debes llevarte a tu próxima sesión de fotos:</p>
+                    <ul class="list-none space-y-3 pl-0 text-gray-700">
+                        <li class="flex items-start font-semibold text-blue-600"><i data-lucide="star" class="w-5 h-5 mr-2 mt-1 text-yellow-500 fill-yellow-500 min-w-[20px]"></i> La luz es más importante que el celular.</li>
+                        <li class="flex items-start font-semibold text-blue-600"><i data-lucide="star" class="w-5 h-5 mr-2 mt-1 text-yellow-500 fill-yellow-500 min-w-[20px]"></i> Menos es más: usa fondos limpios.</li>
+                        <li class="flex items-start font-semibold text-blue-600"><i data-lucide="star" class="w-5 h-5 mr-2 mt-1 text-yellow-500 fill-yellow-500 min-w-[20px]"></i> Usa ángulos simples y probados (Cenital, 45°, Frontal).</li>
+                        <li class="flex items-start font-semibold text-blue-600"><i data-lucide="star" class="w-5 h-5 mr-2 mt-1 text-yellow-500 fill-yellow-500 min-w-[20px]"></i> Edita ligeramente para pulir, no para transformar.</li>
+                        <li class="flex items-start font-semibold text-blue-600"><i data-lucide="star" class="w-5 h-5 mr-2 mt-1 text-yellow-500 fill-yellow-500 min-w-[20px]"></i> Apóyate en IA para ideas y planificación, NO para reemplazar tus fotos.</li>
+                        <li class="flex items-start font-semibold text-blue-600"><i data-lucide="star" class="w-5 h-5 mr-2 mt-1 text-yellow-500 fill-yellow-500 min-w-[20px]"></i> Presenta tus fotos en mockups para un look profesional.</li>
+                    </ul>
+                    <div class="mt-8 p-6 bg-green-100 rounded-xl border-2 border-green-400 text-center">
+                        <p class="text-xl font-bold text-green-800">¡Felicidades, has finalizado el repaso!</p>
+                        <p class="text-green-700 mt-2">Ahora, ¡a poner la cámara en acción!</p>
+                    </div>
+                `,
+                quiz: null // No quiz en el paso final
+            }
+        ];
+
+        const flashcardsData = [
+            { question: "Error: Contraluz", answer: "Solución: Coloca la fuente de luz a un lado (lateral) o al frente del producto." },
+            { question: "Error: Zoom digital", answer: "Solución: ¡Acércate tú! El zoom digital reduce la calidad y añade ruido." },
+            { question: "Error: Fondos ruidosos", answer: "Solución: Usa fondos neutros (blanco, gris, beige) sin texturas fuertes ni objetos distractores." },
+            { question: "Error: Fotos movidas", answer: "Solución: Usa un soporte (trípode, caja, taza) o apoya los codos en una mesa. Mantén la estabilidad." },
+            { question: "Error: Objetos fuera de contexto", answer: "Solución: Retira elementos que no complementan la marca o el producto (ej. platos sucios, cables)." },
+            { question: "Error: Luz amarilla sucia", answer: "Solución: Evita luces artificiales caseras (focos). Usa solo luz natural de ventana o ajusta la temperatura a un tono neutro/frío en edición." }
+        ];
+
+        // --- Elementos del DOM ---
+        const startButton = document.getElementById('start-button');
+        const introContainer = document.getElementById('intro-container');
+        const stepsContainer = document.getElementById('steps-container');
+        const navigationContainer = document.getElementById('navigation-container');
+        const prevButton = document.getElementById('prev-step');
+        const nextButton = document.getElementById('next-step');
+        const stepCounter = document.getElementById('step-counter');
+        const quizModal = document.getElementById('quiz-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalMessage = document.getElementById('modal-message');
+        const modalCloseButton = document.getElementById('modal-close-button');
+
+        // --- Funciones de Utilidad ---
+
+        /**
+         * Maneja el inicio de la aplicación al hacer clic en el botón.
+         */
+        startButton.addEventListener('click', () => {
+            introContainer.classList.add('hidden');
+            stepsContainer.classList.remove('hidden');
+            navigationContainer.classList.remove('hidden');
+            currentStep = 1;
+            isQuizPassed = steps[0].quiz ? false : true; // Requiere aprobar el quiz si existe
+            renderStep();
+        });
+
+        /**
+         * Muestra/Oculta el modal de Quiz y maneja el estado de avance.
+         * @param {boolean} success - Indica si el quiz fue correcto o incorrecto.
+         */
+        function showQuizModal(success) {
+            if (success) {
+                modalIcon.setAttribute('data-lucide', 'check-circle');
+                modalIcon.style.color = '#10B981'; // Green
+                modalTitle.textContent = '¡Correcto!';
+                modalMessage.textContent = '¡Excelente! Pasaste la prueba de la sección. Ahora puedes pasar al siguiente concepto.';
+                isQuizPassed = true;
+                nextButton.disabled = false;
+            } else {
+                modalIcon.setAttribute('data-lucide', 'x-circle');
+                modalIcon.style.color = '#EF4444'; // Red
+                modalTitle.textContent = '¡Inténtalo de Nuevo!';
+                modalMessage.textContent = 'Revisa el concepto y vuelve a intentarlo. Debes responder correctamente para avanzar.';
+                isQuizPassed = false;
+                nextButton.disabled = true;
+            }
+            // Recarga los íconos de Lucide dentro del modal
+            renderIcons();
+            quizModal.classList.remove('hidden');
+            setTimeout(() => quizModal.style.opacity = 1, 10); // Fade in
+            nextButton.textContent = 'Siguiente';
+        }
+
+        modalCloseButton.addEventListener('click', () => {
+            quizModal.classList.add('hidden');
+            // Si falló, simplemente cierra el modal y el botón Siguiente sigue deshabilitado.
+            // Si tuvo éxito, el botón Siguiente ya está habilitado.
+        });
+
+        /**
+         * Renderiza el contenido del paso actual (incluyendo quiz si existe).
+         */
+        function renderStep() {
+            if (currentStep < 1 || currentStep > totalSteps) return;
+
+            const stepIndex = currentStep - 1;
+            const step = steps[stepIndex];
+
+            stepsContainer.innerHTML = `
+                <div class="step-card bg-white p-6 md:p-8 rounded-xl shadow-lg mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i data-lucide="${step.icon}" class="w-7 h-7 mr-3 text-blue-600"></i>
+                        ${step.title}
+                    </h2>
+                    <div class="step-content text-lg leading-relaxed border-t pt-4">
+                        ${step.content}
+                    </div>
+                    <div id="quiz-area" class="mt-8 border-t pt-6">
+                        <!-- Quiz or Flashcards will be placed here -->
+                    </div>
+                </div>
+            `;
+
+            // Recarga los íconos de Lucide en el contenido del paso
+            renderIcons();
+
+            const quizArea = document.getElementById('quiz-area');
+
+            if (step.id === 7) {
+                // Manejar Flashcards
+                quizArea.innerHTML = `
+                    <h3 class="text-xl font-semibold text-blue-800 mb-4 flex items-center"><i data-lucide="help-circle" class="w-5 h-5 mr-2"></i> Tarjetas Interactivas de Errores</h3>
+                    <div id="flashcard-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                        ${flashcardsData.map((card) => `
+                            <div class="flashcard h-32" data-testid="flashcard" tabindex="0">
+                                <div class="flashcard-inner">
+                                    <div class="flashcard-front shadow-lg">
+                                        <p class="text-lg font-bold">${card.question}</p>
+                                    </div>
+                                    <div class="flashcard-back shadow-lg">
+                                        <p class="text-sm">${card.answer}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p class="text-sm text-gray-500 mt-6 text-center">Toca cada tarjeta para ver la solución al error. Después de revisarlas, responde la pregunta para continuar.</p>
+                    <div id="quiz-7" class="mt-8">
+                        <!-- El quiz va aquí -->
+                    </div>
+                `;
+
+                attachFlashcardEvents();
+                renderQuiz(step.quiz, document.getElementById('quiz-7'));
+
+            } else if (step.quiz) {
+                // Manejar Quiz normal
+                renderQuiz(step.quiz, quizArea);
+            } else {
+                // Paso final sin quiz
+                quizArea.innerHTML = '';
+            }
+
+            // Actualizar navegación
+            stepCounter.textContent = `Paso ${currentStep} de ${totalSteps}`;
+            prevButton.disabled = currentStep === 1;
+            nextButton.disabled = !isQuizPassed || currentStep === totalSteps;
+            nextButton.textContent = currentStep === totalSteps ? 'Finalizado' : 'Siguiente';
+
+            // Mover el scroll al inicio del paso
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Renderiza el quiz en el contenedor especificado.
+         * @param {object} quiz - Objeto del quiz actual.
+         * @param {HTMLElement} container - Elemento donde se renderizará el quiz.
+         */
+        function renderQuiz(quiz, container) {
+            container.innerHTML = `
+                <h3 class="text-xl font-semibold text-blue-800 mb-4 flex items-center"><i data-lucide="target" class="w-5 h-5 mr-2"></i> Mini Quiz de Comprensión</h3>
+                <p class="text-lg font-medium text-gray-800 mb-4">${quiz.question}</p>
+                <div class="space-y-3" id="options-container">
+                    ${quiz.options.map((option, index) => `
+                        <button class="quiz-button w-full text-left bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded-lg font-medium transition duration-150"
+                                data-index="${index}"
+                                data-step="${quiz.nextStep}"
+                                type="button">
+                            ${option.text}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            // Asegurar que el botón Siguiente esté deshabilitado si el quiz no ha sido pasado
+            nextButton.disabled = !isQuizPassed;
+            renderIcons();
+
+            container.querySelectorAll('.quiz-button').forEach((button, index) => {
+                button.addEventListener('click', () => checkAnswer(currentStep, index));
+            });
+        }
+
+        function attachFlashcardEvents() {
+            document.querySelectorAll('.flashcard').forEach((card) => {
+                card.addEventListener('click', () => card.classList.toggle('flipped'));
+                card.addEventListener('keypress', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        card.classList.toggle('flipped');
+                    }
+                });
+            });
+        }
+
+        // Función global para manejar la respuesta del quiz
+        function checkAnswer(stepId, optionIndex) {
+            const step = steps.find((s) => s.id === stepId);
+            if (!step || !step.quiz) return;
+
+            const selectedOption = step.quiz.options[optionIndex];
+            const optionsContainer = document.getElementById('options-container');
+            const buttons = optionsContainer.querySelectorAll('.quiz-button');
+
+            // Deshabilitar todos los botones después de la selección
+            buttons.forEach((btn) => {
+                btn.disabled = true;
+            });
+
+            // Resaltar la respuesta seleccionada
+            const selectedButton = buttons[optionIndex];
+            selectedButton.classList.remove('hover:bg-gray-300');
+
+            if (selectedOption.isCorrect) {
+                selectedButton.classList.add('correct', 'text-white', 'shadow-md');
+                showQuizModal(true);
+            } else {
+                selectedButton.classList.add('incorrect', 'text-white', 'shadow-md');
+                // Mostrar la respuesta correcta
+                step.quiz.options.forEach((option, index) => {
+                    if (option.isCorrect) {
+                        buttons[index].classList.add('bg-yellow-500', 'text-white', 'shadow-md');
+                    }
+                });
+                showQuizModal(false);
+                // Re-habilitar los botones para que el usuario pueda reintentar
+                buttons.forEach((btn) => {
+                    btn.disabled = false;
+                });
+            }
+        }
+
+        /**
+         * Navegación: Mover al paso siguiente.
+         */
+        nextButton.addEventListener('click', () => {
+            if (currentStep < totalSteps && isQuizPassed) {
+                currentStep++;
+                isQuizPassed = steps[currentStep - 1].quiz ? false : true; // Si el nuevo paso tiene quiz, deshabilitar Siguiente
+                renderStep();
+            } else if (currentStep === totalSteps) {
+                // Mensaje de fin
+                alert("¡Has completado el repaso! Vuelve al inicio para repasar los conceptos.");
+            }
+        });
+
+        /**
+         * Navegación: Mover al paso anterior.
+         */
+        prevButton.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                isQuizPassed = true; // Al regresar, siempre se asume que puede avanzar (el control de quiz es solo hacia adelante)
+                renderStep();
+            }
+        });
+
+        // Inicialización al cargar la página (muestra la intro)
+        document.addEventListener('DOMContentLoaded', () => {
+            renderIcons();
+            // Al cargar, deshabilitar el botón Siguiente hasta que se inicie o se pase el quiz
+            nextButton.disabled = true;
+            prevButton.disabled = true;
+            stepCounter.textContent = '¡Comienza Ahora!';
+        });
+
+        // Exponer funciones necesarias para otros scripts o tests
+        window.checkAnswer = checkAnswer;
+    </script>
+</body>
+</html>
